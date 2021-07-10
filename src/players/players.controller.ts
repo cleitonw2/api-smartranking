@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Post, Query } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Post,
+    Query,
+    UsePipes,
+    ValidationPipe
+} from '@nestjs/common';
 import { CreatePlayerDto } from './dtos/create-player.dto';
 import { IPlayer } from './interfaces/player.interface';
 import { PlayersService } from './players.service';
@@ -11,6 +20,7 @@ export class PlayersController {
     ) { }
 
     @Post()
+    @UsePipes(ValidationPipe)
     async createAndUpdatePlayer(
         @Body() createPlayerDto: CreatePlayerDto
     ): Promise<void> {
@@ -33,7 +43,7 @@ export class PlayersController {
     async deletePlayer(
         @Query("email") email: string
     ): Promise<void> {
-        
+
         this.playersServices.delete(email);
     }
 }
