@@ -3,13 +3,16 @@ import {
     Controller,
     Delete,
     Get,
+    Param,
     Post,
-    Query,
+    Put,
     UsePipes,
     ValidationPipe
 } from '@nestjs/common';
 import { CreatePlayerDto } from './dtos/create-player.dto';
+import { UpdatePlayerDto } from './dtos/update-player.dto';
 import { IPlayer } from './interfaces/player.interface';
+import { PlayerParametersValidationPipe } from './pipes/player-parameter-validation.pipe';
 import { PlayersService } from './players.service';
 
 @Controller('api/v1/players')
@@ -21,29 +24,43 @@ export class PlayersController {
 
     @Post()
     @UsePipes(ValidationPipe)
-    async createAndUpdatePlayer(
+    async createPlayer(
         @Body() createPlayerDto: CreatePlayerDto
+    ): Promise<IPlayer> {
+
+        return await this.playersServices.createPlayer(createPlayerDto);
+    }
+
+    @Put("/:_id")
+    @UsePipes(ValidationPipe)
+    async updatePlayer(
+        @Body() updatePlayerDto: UpdatePlayerDto,
+        @Param("_id", PlayerParametersValidationPipe) _id: string
     ): Promise<void> {
-        await this.playersServices.crateAndUpdatePlayer(createPlayerDto);
+
+        await this.playersServices.updatePlayer(_id, updatePlayerDto);
     }
 
     @Get()
-    async showPlayers(
-        @Query("email") email: string
-    ): Promise<IPlayer[] | IPlayer> {
+    async showPlayers(): Promise<IPlayer[]> {
 
-        if (email) {
-            return this.playersServices.showPlayerByEmail(email);
-        } else {
-            return this.playersServices.showPlayers();
-        }
+        return await this.playersServices.showPlayers();
     }
 
-    @Delete()
+    @Get("/:_id")
+    @UsePipes(ValidationPipe)
+    async showPlayerById(
+        @Param("_id", PlayerParametersValidationPipe) _id: string
+    ): Promise<IPlayer> {
+
+        return await this.playersServices.showPlayerById(_id);
+    }
+
+    @Delete("/:_id")
     async deletePlayer(
-        @Query("email") email: string
+        @Param("_id", PlayerParametersValidationPipe) _id: string
     ): Promise<void> {
 
-        this.playersServices.delete(email);
+        await this.playersServices.delete(_id);
     }
 }

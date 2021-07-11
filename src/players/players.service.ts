@@ -1,9 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePlayerDto } from './dtos/create-player.dto';
 import { IPlayer } from './interfaces/player.interface';
-import { v4 as uuid } from 'uuid';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { UpdatePlayerDto } from './dtos/update-player.dto';
 
 @Injectable()
 export class PlayersService {
@@ -13,20 +13,44 @@ export class PlayersService {
         private readonly playerModel: Model<IPlayer>
     ) { }
 
-    async crateAndUpdatePlayer(
+    private async playerAlradyExists(_id: string): Promise<IPlayer> {
+        const playerExists = await this.playerModel.findOne({ _id }).exec();
+
+        if (!playerExists) {
+            throw new NotFoundException(`Jogador com o id: ${_id}, não existe!`);
+        }
+
+        return playerExists;
+    }
+
+    async createPlayer(
         createPlayerDto: CreatePlayerDto
-    ): Promise<void> {
+    ): Promise<IPlayer> {
 
         const { email } = createPlayerDto;
 
         const playerExists = await this.playerModel
             .findOne({ email });
 
-        if (!playerExists) {
-            await this.create(createPlayerDto);
-        } else {
-            await this.update(createPlayerDto);
+        if (playerExists) {
+            throw new BadRequestException(`O email: ${email} já está em uso!`);
         }
+
+        const player = new this.playerModel(createPlayerDto);
+
+        return await player.save();
+    }
+
+    async updatePlayer(
+        _id: string, updatePlayerDto: UpdatePlayerDto
+    ): Promise<void> {
+
+        await this.playerAlradyExists(_id);
+
+        await this.playerModel.findOneAndUpdate(
+            { _id },
+            { $set: updatePlayerDto }
+        ).exec();
     }
 
     async showPlayers(): Promise<IPlayer[]> {
@@ -34,36 +58,17 @@ export class PlayersService {
         return this.playerModel.find().exec();
     }
 
-    async showPlayerByEmail(email: string): Promise<IPlayer> {
+    async showPlayerById(_id: string): Promise<IPlayer> {
 
-        const playerExists = await this.playerModel.findOne({ email }).exec();
-        
-        if (!playerExists) {
-            throw new NotFoundException("Jogador não encontrado!");
-        }
+        const player = this.playerAlradyExists(_id);
 
-        return playerExists;
+        return player;
     }
 
-    async delete(email: string): Promise<any> {
+    async delete(_id: string): Promise<any> {
 
-        return await this.playerModel.findOneAndDelete({ email }).exec();
-    }
+        await this.playerAlradyExists(_id);
 
-    private async create(createPlayerDto: CreatePlayerDto): Promise<IPlayer> {
-
-        const player = new this.playerModel(createPlayerDto);
-
-        return await player.save();
-    }
-
-    private async update(
-        createPlayerDto: CreatePlayerDto
-    ): Promise<IPlayer> {
-
-        return await this.playerModel.findOneAndUpdate(
-            { email: createPlayerDto.email },
-            { $set: createPlayerDto }
-        ).exec();
+        return await this.playerModel.findOneAndDelete({ _id }).exec();
     }
 }
