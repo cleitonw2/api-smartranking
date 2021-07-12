@@ -48,7 +48,6 @@ export class PlayersController {
     }
 
     @Get("/:_id")
-    @UsePipes(ValidationPipe)
     async showPlayerById(
         @Param("_id", PlayerParametersValidationPipe) _id: string
     ): Promise<IPlayer> {
