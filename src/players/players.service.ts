@@ -13,7 +13,7 @@ export class PlayersService {
         private readonly playerModel: Model<IPlayer>
     ) { }
 
-    private async playerAlradyExists(_id: string): Promise<IPlayer> {
+    private async playerAlreadyExists(_id: string): Promise<IPlayer> {
         const playerExists = await this.playerModel.findOne({ _id }).exec();
 
         if (!playerExists) {
@@ -45,7 +45,7 @@ export class PlayersService {
         _id: string, updatePlayerDto: UpdatePlayerDto
     ): Promise<void> {
 
-        await this.playerAlradyExists(_id);
+        await this.playerAlreadyExists(_id);
 
         await this.playerModel.findOneAndUpdate(
             { _id },
@@ -60,14 +60,14 @@ export class PlayersService {
 
     async showPlayerById(_id: string): Promise<IPlayer> {
 
-        const player = this.playerAlradyExists(_id);
+        const player = this.playerAlreadyExists(_id);
 
         return player;
     }
 
     async delete(_id: string): Promise<any> {
 
-        await this.playerAlradyExists(_id);
+        await this.playerAlreadyExists(_id);
 
         return await this.playerModel.findOneAndDelete({ _id }).exec();
     }
